@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinZen - AI Financial Coach</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <header class="app-header" id="main-header">
+        <div class="brand"><i class="fa-solid fa-robot"></i> FinZen</div>
+        <div class="header-actions">
+            <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn"><i class="fa-solid fa-moon"></i></button>
+            <div class="user-avatar" id="header-avatar" onclick="toggleProfileMenu()">?</div>
+            <div class="profile-menu" id="profile-menu">
+            <div class="menu-item" onclick="toggleGoalModal()">
+                <i class="fa-solid fa-bullseye"></i> Change Goal
+            </div>
+            <div class="menu-item danger" onclick="logout()">
+                <i class="fa-solid fa-right-from-bracket"></i> Reset Profile
+            </div>
+        </div>
+        </div>
+    </header>
+
+    <section id="onboarding-view" class="view-section active">
+        <div class="onboarding-container">
+            <div class="onboarding-icon"><i class="fa-solid fa-sack-dollar"></i></div>
+            <h1 class="onboarding-title">Welcome to FinZen</h1>
+            <p class="onboarding-sub">Your personal AI financial coach. Let's get to know you.</p>
+            <form id="onboarding-form" onsubmit="handleOnboarding(event)">
+                <div class="input-group">
+                    <label>Name</label>
+                    <input type="text" id="user-name" class="input-field" placeholder="e.g. John" required>
+                </div>
+                <div class="input-group">
+                    <label>Monthly Income Estimate</label>
+                    <input type="number" id="user-income" class="input-field" placeholder="e.g. 5000" required>
+                </div>
+                <div class="input-group">
+                    <label>Main Goal</label>
+                    <select id="user-goal" class="input-field">
+                        <option value="savings">Build Savings</option>
+                        <option value="debt">Reduce Debt</option>
+                        <option value="investing">Start Investing</option>
+                        <option value="tracking">Track Spending</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">Start My Journey</button>
+            </form>
+        </div>
+    </section>
+
+    <section id="dashboard-view" class="view-section">
+        <div class="greeting">
+            <h2 id="dashboard-greeting">Hello! 👋</h2>
+            <p>Here's your financial pulse today.</p>
+        </div>
+        <div id="ai-nudge-card" class="card" style="background: linear-gradient(135deg, #8B5CF6, #6D28D9); color: white; margin-bottom: 20px; display: none;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:5px;">
+                <i class="fa-solid fa-lightbulb" style="color:#FDE047;"></i> 
+                <span style="font-weight:600; font-size:0.9rem;">FinZen Insight</span>
+            </div>
+        <p id="ai-nudge-text" style="font-size:0.95rem; line-height:1.4;">Analyzing your spending...</p>
+        </div>
+        <div class="stats-grid">
+            <div class="card full-width">
+                <div class="stat-label" style="color: rgba(255,255,255,0.8);">Total Balance</div>
+                <div class="stat-value" style="color: white;" id="dash-balance">$0.00</div>
+            </div>
+            <div class="card">
+                <div class="stat-label">Monthly Income</div>
+                <div class="stat-value green" id="dash-income">+$0</div>
+                <div id="income-breakdown" style="font-size: 0.75rem; color: var(--text-sub); margin-top: 4px;">
+                    Fixed: $0 | Gig: $0
+                </div>
+            </div>
+            <div class="card">
+                <div class="stat-label">Expenses</div>
+                <div class="stat-value red" id="dash-expense">-$0</div>
+            </div>
+        </div>
+
+        <h3>Spending Breakdown</h3>
+        <div class="card" style="margin-top: 10px; margin-bottom: 25px; position: relative; height: 250px; display:flex; justify-content:center;">
+            <canvas id="expenseChart"></canvas>
+            <div id="no-chart-data" class="hidden" style="position:absolute; top:45%; color:var(--text-sub);">Add expenses to see chart</div>
+        </div>
+
+        <h3>Recent Activity</h3>
+        <div class="transaction-list" id="transaction-list">
+            </div>
+        <div id="no-transactions" class="card hidden" style="margin-top:10px; text-align:center; color:var(--text-sub);">
+            <p>No transactions yet.</p>
+        </div>
+    </section>
+
+    <section id="chat-view" class="view-section">
+        <div class="chat-messages" id="chat-messages">
+            <div class="message bot">Hi! I'm FinZen. How can I help you reach your goal today?</div>
+        </div>
+        <div class="chat-input-area">
+        <button class="icon-btn" id="mic-btn" onclick="startDictation()">
+            <i class="fa-solid fa-microphone"></i>
+        </button>
+        
+        <input type="text" id="chat-input" class="chat-input" placeholder="Ask for advice..." onkeypress="handleEnter(event)">
+        
+        <button class="send-btn" onclick="sendMessage()">
+            <i class="fa-solid fa-paper-plane"></i>
+        </button>
+    </div>
+    </section>
+
+    <div class="modal-overlay" id="transaction-modal">
+        <div class="modal">
+            <button class="close-modal" onclick="toggleModal()">&times;</button>
+            <h3>Add Transaction</h3>
+            <form onsubmit="handleTransactionSubmit(event)">
+                <div class="input-group">
+                    <label>Description</label>
+                    <input type="text" id="t-desc" class="input-field" placeholder="e.g. Uber, Freelance" required>
+                </div>
+                <div class="input-group">
+                    <label>Amount</label>
+                    <input type="number" id="t-amount" class="input-field" placeholder="0.00" required>
+                </div>
+                <div class="input-group">
+                    <label>Type</label>
+                    <select id="t-type" class="input-field">
+                        <option value="expense">Expense</option>
+                        <option value="income">Income</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Category</label>
+                    <select id="t-category" class="input-field">
+                        <option value="Food">Food & Dining</option>
+                        <option value="Transport">Transport</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Bills">Bills & Utilities</option>
+                        <option value="Income">Salary / Freelance</option>
+                    </select>
+                </div>
+                <div class="input-group hidden" id="gig-toggle-group">
+                <div style="display:flex; align-items:center; gap:10px; background:var(--bg-body); padding:10px; border-radius:8px;">
+                    <input type="checkbox" id="t-is-gig" style="width:20px; height:20px;">
+                    <div>
+                        <label style="margin:0; cursor:pointer;" for="t-is-gig">This is Gig/Variable Income</label>
+                        <div style="font-size:0.75rem; color:var(--text-sub);">Freelance, Uber, tips, etc.</div>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">Add Transaction</button>
+            </form>
+        </div>
+    </div>
+    <div class="modal-overlay" id="goal-modal">
+    <div class="modal">
+        <button class="close-modal" onclick="toggleGoalModal()">&times;</button>
+        <h3>Update Your Goal</h3>
+        <p style="color:var(--text-sub); margin-bottom:20px; font-size:0.9rem;">
+            Changing your goal will help the AI Coach give you better advice.
+        </p>
+        <form onsubmit="handleGoalUpdate(event)">
+            <div class="input-group">
+                <label>New Goal</label>
+                <select id="update-goal-select" class="input-field">
+                    <option value="savings">Build Savings</option>
+                    <option value="debt">Reduce Debt</option>
+                    <option value="investing">Start Investing</option>
+                    <option value="tracking">Track Spending</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-primary">Save New Goal</button>
+        </form>
+    </div>
+    </div>
+    <nav class="bottom-nav" id="main-nav">
+        <a class="nav-item active" onclick="switchView('dashboard', this)"><i class="fa-solid fa-house"></i><span>Home</span></a>
+        <div class="nav-item fab-container" onclick="toggleModal()"><div class="fab"><i class="fa-solid fa-plus"></i></div></div>
+        <a class="nav-item" onclick="switchView('chat', this)"><i class="fa-solid fa-comment-dots"></i><span>Coach</span></a>
+    </nav>
+
+    <script src="script.js"></script>
+</body>
+</html>
